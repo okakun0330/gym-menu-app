@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>今日のジムメニュー</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card-border: #2a2e38;
+    --accent: #ff6b35;
+    --accent-2: #4dd0e1;
+    --text: #f2f2f2;
+    --text-dim: #9a9fa8;
+    --done-bg: #1f3d2a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin: 8px 0 20px;
+    color: var(--text-dim);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .picker {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    max-width: 480px;
+    margin: 0 auto 24px;
+  }
+  .picker button {
+    padding: 16px 6px;
+    border-radius: 14px;
+    border: 2px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .picker button:active { transform: scale(0.96); }
+  .picker button.active {
+    border-color: var(--accent);
+    background: linear-gradient(145deg, #2a1810, #1a1d24);
+    color: var(--accent);
+  }
+  #menuArea { max-width: 480px; margin: 0 auto; }
+  .day-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 4px 0 16px;
+    text-align: center;
+  }
+  .day-title .main-lift { color: var(--accent); }
+  ul.exlist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  ul.exlist li {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  ul.exlist li.main-ex {
+    border-color: var(--accent);
+    background: linear-gradient(145deg, #241611, #1a1d24);
+  }
+  ul.exlist li.arm-ex {
+    border-color: var(--accent-2);
+  }
+  ul.exlist li.done {
+    background: var(--done-bg);
+    opacity: 0.6;
+  }
+  ul.exlist li.done .ex-name { text-decoration: line-through; }
+  .checkbox {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  li.done .checkbox {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #111;
+  }
+  .ex-info { flex: 1; }
+  .ex-name { font-size: 15px; font-weight: 600; }
+  .ex-sets { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(77,208,225,0.15);
+    color: var(--accent-2);
+    margin-left: 4px;
+  }
+  .empty-hint {
+    text-align: center;
+    color: var(--text-dim);
+    margin-top: 40px;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .reset-btn {
+    display: block;
+    margin: 24px auto 0;
+    background: none;
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .reset-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<h1>今日はどのビッグ3?</h1>
+
+<div class="picker">
+  <button data-day="squat">スクワット</button>
+  <button data-day="bench">ベンチ<br>プレス</button>
+  <button data-day="deadlift">デッド<br>リフト</button>
+</div>
+
+<div id="menuArea">
+  <div class="empty-hint">上のボタンから今日の種目を選んでね。<br>タップした種目にはチェックがつきます。</div>
+</div>
+
+<script>
+const MENUS = {
+  squat: {
+    title: "スクワット",
+    exercises: [
+      { name: "スクワット", sets: "4-5セット × 6-10rep", type: "main" },
+      { name: "レッグプレス", sets: "3セット × 10-12rep" },
+      { name: "レッグカール", sets: "3セット × 10-12rep" },
+      { name: "カーフレイズ", sets: "3セット × 15-20rep" },
+      { name: "ダンベルカール", sets: "3セット × 12-15rep", type: "arm" },
+      { name: "オーバーヘッドトライセプスエクステンション", sets: "3セット × 12-15rep", type: "arm" },
+      { name: "腹筋種目", sets: "2-3セット" }
+    ]
+  },
+  bench: {
+    title: "ベンチプレス",
+    exercises: [
+      { name: "ベンチプレス", sets: "4-5セット × 6-10rep", type: "main" },
+      { name: "インクラインダンベルプレス", sets: "3セット × 10-12rep" },
+      { name: "ケーブルクロスオーバー", sets: "3セット × 12-15rep" },
+      { name: "サイドレイズ", sets: "3セット × 12-15rep" },
+      { name: "クローズグリップベンチ or ディップス", sets: "3セット × 8-12rep" },
+      { name: "トライセプスプレスダウン", sets: "3セット × 12-15rep", type: "arm" },
+      { name: "ハンマーカール", sets: "3セット × 12-15rep", type: "arm" }
+    ]
+  },
+  deadlift: {
+    title: "デッドリフト",
+    exercises: [
+      { name: "デッドリフト", sets: "3-5セット × 5-8rep", type: "main" },
+      { name: "ラットプルダウン", sets: "3セット × 8-12rep" },
+      { name: "シーテッドロウ", sets: "3セット × 10-12rep" },
+      { name: "バーベルカール", sets: "3セット × 10-12rep", type: "arm" },
+      { name: "インクラインダンベルカール", sets: "3セット × 12-15rep", type: "arm" },
+      { name: "フェイスプル", sets: "3セット × 15rep" }
+    ]
+  }
+};
+
+const buttons = document.querySelectorAll(".picker button");
+const menuArea = document.getElementById("menuArea");
+
+function todayKey(day) {
+  const d = new Date();
+  const dateStr = d.toISOString().slice(0, 10);
+  return `gym-menu-${dateStr}-${day}`;
+}
+
+function render(day) {
+  buttons.forEach(b => b.classList.toggle("active", b.dataset.day === day));
+  const menu = MENUS[day];
+  const storeKey = todayKey(day);
+  const saved = JSON.parse(localStorage.getItem(storeKey) || "{}");
+
+  const items = menu.exercises.map((ex, i) => {
+    const done = !!saved[i];
+    const cls = ["main-ex", "arm"].includes(ex.type) ? ex.type + "-ex" : "";
+    const tag = ex.type === "arm" ? '<span class="tag">腕</span>' : "";
+    return `
+      <li class="${cls} ${done ? 'done' : ''}" data-idx="${i}">
+        <div class="checkbox">${done ? "✓" : ""}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}${tag}</div>
+          <div class="ex-sets">${ex.sets}</div>
+        </div>
+      </li>`;
+  }).join("");
+
+  menuArea.innerHTML = `
+    <div class="day-title">今日は <span class="main-lift">${menu.title}</span> の日</div>
+    <ul class="exlist">${items}</ul>
+    <button class="reset-btn" id="resetBtn">チェックをリセット</button>
+  `;
+
+  menuArea.querySelectorAll("li[data-idx]").forEach(li => {
+    li.addEventListener("click", () => {
+      const idx = li.dataset.idx;
+      const cur = JSON.parse(localStorage.getItem(storeKey) || "{}");
+      cur[idx] = !cur[idx];
+      localStorage.setItem(storeKey, JSON.stringify(cur));
+      render(day);
+    });
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    localStorage.removeItem(storeKey);
+    render(day);
+  });
+}
+
+buttons.forEach(b => {
+  b.addEventListener("click", () => render(b.dataset.day));
+});
+</script>
+
+</body>
+</html>
